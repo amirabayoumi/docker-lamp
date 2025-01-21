@@ -1,26 +1,28 @@
 <?php
-
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
-
 require('db.inc.php');
-$errors = [];
 
-print '<pre>';
-print_r($_FILES);
-print '</pre>';
+// ini_set('display_errors', '1');
+// ini_set('display_startup_errors', '1');
+// error_reporting(E_ALL);
 
-
+$items = getDbImages();
 function randomName()
 {
     return bin2hex(random_bytes(16));
 }
 
+$errors = [];
+
+// print '<pre>';
+// print_r($_FILES);
+// print '</pre>';
+
 if (isset($_POST["formSubmit"])) {
-    print '<pre>';
-    print_r($_POST);
-    print '</pre>';
+
+
+    // print '<pre>';
+    // print_r($_POST);
+    // print '</pre>';
     // Check for upload errors in file
     if ($_FILES["imgupload"]["error"] > 0) {
         $errors[] = "Error: " . $_FILES["imgupload"]["error"];
@@ -28,11 +30,11 @@ if (isset($_POST["formSubmit"])) {
     } else {
         $uploadOk = 1;
     }
+
     // Validation file type ( if img or not)
     if (isset($_FILES["imgupload"]["tmp_name"]) && !empty($_FILES["imgupload"]["tmp_name"])) {
         $check = getimagesize($_FILES["imgupload"]["tmp_name"]);
         if ($check !== false) {
-            echo "File is an image - " . $check["mime"] . ".";
             $uploadOk = 1;
         } else {
             $errors[] = "File is not an image.";
@@ -40,42 +42,35 @@ if (isset($_POST["formSubmit"])) {
         }
     }
 
-
     $imageFileType = strtolower(pathinfo($_FILES["imgupload"]["name"], PATHINFO_EXTENSION));
+
     // Allow only jpg, jpeg, png
-    if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg") {
+    if (!in_array($imageFileType, ["jpg", "jpeg", "png"])) {
         $errors[] = "Sorry, only JPG, JPEG, PNG files are allowed.";
         $uploadOk = 0;
     }
 
-    // Allow only file size up to 1MB
+    // Limit file size to 1MB
     if ($_FILES["imgupload"]["size"] > 1000000) {
         $errors[] = "Sorry, your file is too large.";
         $uploadOk = 0;
     }
 
-    if ($uploadOk == 0) {
-        $errors[] = "Sorry, your file was not uploaded.";
-    } else {
-        // no errors , upload file 
+    // no errors , upload file 
+    if ($uploadOk === 1) {
         $target_dir = "uploads/";
         $target_file = $target_dir . randomName() . "." . $imageFileType;
-        $uploadOk = 1;
-        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-        $uploadOk = 1;
 
         if (move_uploaded_file($_FILES["imgupload"]["tmp_name"], $target_file)) {
-            $success = "The file has been uploaded.";
             insertDbImage($target_file);
-            unset($_FILES['imgupload']);
-            unset($_POST['formSubmit']);
+            $success = "The file has been uploaded.";
+            header("Location: index.php");
+            exit;
         } else {
             $errors[] = "Sorry, there was an error uploading your file.";
         }
     }
 }
-$items = getDbImages();
-
 ?>
 <!doctype html>
 <html lang="en">
